@@ -1,2 +1,2 @@
-export const API_BASE_URL = "http://ndiukydev.duckdns.org:10000/api";
-export const MEDIA_BASE_URL = "http://ndiukydev.duckdns.org:10000";
+export const API_BASE_URL = "https://ndiukydev.duckdns.org:20000/api";
+export const MEDIA_BASE_URL = "https://ndiukydev.duckdns.org:20000/";
