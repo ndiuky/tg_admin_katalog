@@ -118,6 +118,15 @@ const toggleSidebar = () => {
         >
           Контент лендинга
         </router-link>
+
+        <router-link
+          to="/settings"
+          class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          active-class="bg-gray-200 text-gray-900 font-medium"
+          @click="isSidebarOpen = false"
+        >
+          Настройки цветов
+        </router-link>
       </nav>
 
       <div class="p-4 border-t border-gray-100">

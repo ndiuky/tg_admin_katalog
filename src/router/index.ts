@@ -4,6 +4,7 @@ import Login from "../pages/Login/Login.vue";
 import Categories from "../pages/Categories/Categories.vue";
 import Items from "../pages/Items/Items.vue";
 import Lending from "../pages/Lending/Lending.vue";
+import Settings from "../pages/Settings/Settings.vue";
 import Главная from "../pages/Dashboard.vue";
 import Layout from "../components/Layout/Layout.vue";
 
@@ -40,6 +41,11 @@ const router = createRouter({
           path: "lending",
           name: "Lending",
           component: Lending,
+        },
+        {
+          path: "settings",
+          name: "Settings",
+          component: Settings,
         },
       ],
     },
