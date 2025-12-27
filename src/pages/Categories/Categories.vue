@@ -10,7 +10,7 @@ import {
 import type { Category } from "../../types";
 import Modal from "../../components/Modal/Modal.vue";
 import { z } from "zod";
-import { MEDIA_BASE_URL } from "../../const";
+import { resolveImageUrl } from "../../const";
 
 const categories = ref<Category[]>([]);
 const loading = ref(false);
@@ -77,7 +77,7 @@ const openEditModal = (category: Category) => {
     image: null,
   };
   imagePreview.value = category.imageUrl
-    ? `${MEDIA_BASE_URL}/${category.imageUrl}`
+    ? resolveImageUrl(category.imageUrl)
     : null;
   formErrors.value = {};
   isModalOpen.value = true;
@@ -113,7 +113,7 @@ const handleDrop = (event: DragEvent) => {
 const clearImageSelection = () => {
   form.value.image = null;
   if (editingCategory.value && editingCategory.value.imageUrl) {
-    imagePreview.value = `${MEDIA_BASE_URL}/${editingCategory.value.imageUrl}`;
+    imagePreview.value = resolveImageUrl(editingCategory.value.imageUrl);
   } else {
     imagePreview.value = null;
   }
@@ -260,10 +260,7 @@ onMounted(fetchCategories);
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <img
-                :src="
-                  `${MEDIA_BASE_URL}/${category.imageUrl}` ||
-                  '/media/default_item_image.png'
-                "
+                :src="resolveImageUrl(category.imageUrl)"
                 alt="Category"
                 class="h-10 w-10 rounded-full object-cover"
               />

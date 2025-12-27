@@ -1,6 +1,6 @@
 import apiClient from "./client";
 
-interface ColorDto {
+export interface ColorDto {
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;

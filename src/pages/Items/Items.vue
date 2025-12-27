@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import {
   getItems,
   createItem,
@@ -11,7 +11,12 @@ import { getCategories } from "../../api/categories";
 import type { Item, Category } from "../../types";
 import Modal from "../../components/Modal/Modal.vue";
 import { z } from "zod";
-import { MEDIA_BASE_URL } from "../../const";
+import {
+  resolveImageUrl,
+  PRODUCT_TYPES,
+  getSizesForType,
+  getProductType,
+} from "../../const";
 
 const items = ref<Item[]>([]);
 const categories = ref<Category[]>([]);
@@ -34,14 +39,45 @@ const form = ref({
   description: "",
   descriptionAz: "",
   price: 0,
-  type: "other",
-  size: "",
+  type: "clothing",
   categoryId: 0,
   image: null as File | null,
 });
+const selectedSizes = ref<string[]>([]);
 const imagePreview = ref<string | null>(null);
 const formErrors = ref<Record<string, string>>({});
 const formLoading = ref(false);
+
+// Available sizes based on selected type
+const availableSizes = computed(() => getSizesForType(form.value.type));
+
+// Watch for type changes to reset sizes
+watch(
+  () => form.value.type,
+  () => {
+    selectedSizes.value = [];
+  }
+);
+
+// Toggle size selection
+const toggleSize = (size: string) => {
+  const index = selectedSizes.value.indexOf(size);
+  if (index === -1) {
+    selectedSizes.value.push(size);
+  } else {
+    selectedSizes.value.splice(index, 1);
+  }
+};
+
+// Select all sizes
+const selectAllSizes = () => {
+  selectedSizes.value = [...availableSizes.value];
+};
+
+// Clear all sizes
+const clearAllSizes = () => {
+  selectedSizes.value = [];
+};
 
 const schema = z.object({
   title: z.string().min(1, "Название (RU) обязательно"),
@@ -99,11 +135,11 @@ const openCreateModal = () => {
     description: "",
     descriptionAz: "",
     price: 0,
-    type: "other",
-    size: "",
+    type: "clothing",
     categoryId: 0,
     image: null,
   };
+  selectedSizes.value = [];
   imagePreview.value = null;
   formErrors.value = {};
   isModalOpen.value = true;
@@ -118,14 +154,15 @@ const openEditModal = (item: Item) => {
     description: item.description || "",
     descriptionAz: item.descriptionAz || "",
     price: item.price,
-    type: item.type,
-    size: item.size || "",
+    type: item.type || "clothing",
     categoryId: item.categoryId,
     image: null,
   };
-  imagePreview.value = item.imageUrl
-    ? `${MEDIA_BASE_URL}/${item.imageUrl}`
-    : null;
+  // Parse existing sizes
+  selectedSizes.value = item.size
+    ? item.size.split(",").map((s) => s.trim())
+    : [];
+  imagePreview.value = item.imageUrl ? resolveImageUrl(item.imageUrl) : null;
   formErrors.value = {};
   isModalOpen.value = true;
 };
@@ -160,7 +197,7 @@ const handleDrop = (event: DragEvent) => {
 const clearImageSelection = () => {
   form.value.image = null;
   if (editingItem.value && editingItem.value.imageUrl) {
-    imagePreview.value = `${MEDIA_BASE_URL}/${editingItem.value.imageUrl}`;
+    imagePreview.value = resolveImageUrl(editingItem.value.imageUrl);
   } else {
     imagePreview.value = null;
   }
@@ -201,7 +238,7 @@ const handleSubmit = async () => {
       descriptionAz: form.value.descriptionAz,
       price: form.value.price,
       type: form.value.type,
-      size: form.value.size,
+      size: selectedSizes.value.join(","),
       categoryId: form.value.categoryId,
     };
 
@@ -288,8 +325,13 @@ onMounted(fetchData);
         class="w-full md:w-1/4 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <option value="all">Все типы</option>
-        <option value="other">Other</option>
-        <!-- Add other types if known, TZ says default "other" -->
+        <option
+          v-for="productType in PRODUCT_TYPES"
+          :key="productType.id"
+          :value="productType.id"
+        >
+          {{ productType.label }}
+        </option>
       </select>
     </div>
 
@@ -328,6 +370,11 @@ onMounted(fetchData);
               Тип
             </th>
             <th
+              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Размеры
+            </th>
+            <th
               class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
             >
               Действия
@@ -341,7 +388,7 @@ onMounted(fetchData);
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <img
-                :src="`${MEDIA_BASE_URL}/${item.imageUrl}` || '/media/default_item_image.png'"
+                :src="resolveImageUrl(item.imageUrl)"
                 alt="Item"
                 class="h-10 w-10 rounded-full object-cover"
               />
@@ -361,7 +408,11 @@ onMounted(fetchData);
               {{ item.price }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              {{ item.type }}
+              {{ getProductType(item.type)?.label || item.type }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <span v-if="item.size" class="text-xs">{{ item.size }}</span>
+              <span v-else class="text-gray-400">—</span>
             </td>
             <td
               class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
@@ -381,7 +432,7 @@ onMounted(fetchData);
             </td>
           </tr>
           <tr v-if="filteredItems.length === 0">
-            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+            <td colspan="8" class="px-6 py-4 text-center text-gray-500">
               Товары не найдены
             </td>
           </tr>
@@ -463,29 +514,71 @@ onMounted(fetchData);
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Тип</label>
-              <input
-                v-model="form.type"
-                type="text"
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-              <p v-if="formErrors.type" class="text-red-500 text-xs mt-1">
-                {{ formErrors.type }}
-              </p>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700"
-                >Размер</label
+          <div class="mt-4">
+            <label class="block text-sm font-medium text-gray-700"
+              >Тип товара</label
+            >
+            <select
+              v-model="form.type"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option
+                v-for="productType in PRODUCT_TYPES"
+                :key="productType.id"
+                :value="productType.id"
               >
-              <input
-                v-model="form.size"
-                type="text"
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+                {{ productType.label }}
+              </option>
+            </select>
+            <p v-if="formErrors.type" class="text-red-500 text-xs mt-1">
+              {{ formErrors.type }}
+            </p>
+          </div>
+
+          <div class="mt-4" v-if="availableSizes.length > 0">
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm font-medium text-gray-700"
+                >Доступные размеры</label
+              >
+              <div class="flex gap-2">
+                <button
+                  type="button"
+                  @click="selectAllSizes"
+                  class="text-xs text-blue-600 hover:text-blue-800"
+                >
+                  Выбрать все
+                </button>
+                <button
+                  type="button"
+                  @click="clearAllSizes"
+                  class="text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Очистить
+                </button>
+              </div>
             </div>
+            <div class="flex flex-wrap gap-2">
+              <button
+                v-for="size in availableSizes"
+                :key="size"
+                type="button"
+                @click="toggleSize(size)"
+                :class="[
+                  'px-3 py-1.5 text-sm font-medium rounded-md border transition-colors',
+                  selectedSizes.includes(size)
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400',
+                ]"
+              >
+                {{ size }}
+              </button>
+            </div>
+            <p
+              class="text-xs text-gray-500 mt-2"
+              v-if="selectedSizes.length > 0"
+            >
+              Выбрано: {{ selectedSizes.join(", ") }}
+            </p>
           </div>
 
           <div class="mt-4">
