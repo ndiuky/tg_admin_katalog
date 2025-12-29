@@ -215,7 +215,7 @@ const handleDrop = (event: DragEvent) => {
 };
 
 const removeNewImage = (index: number) => {
-  URL.revokeObjectURL(newImagePreviews.value[index]);
+  URL.revokeObjectURL(newImagePreviews.value[index] as string);
   newImages.value.splice(index, 1);
   newImagePreviews.value.splice(index, 1);
 };
