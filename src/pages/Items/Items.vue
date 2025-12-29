@@ -5,10 +5,11 @@ import {
   createItem,
   updateItem,
   deleteItem,
-  uploadItemImage,
+  uploadItemImages,
+  deleteItemImage,
 } from "../../api/items";
 import { getCategories } from "../../api/categories";
-import type { Item, Category } from "../../types";
+import type { Item, Category, ItemImage } from "../../types";
 import Modal from "../../components/Modal/Modal.vue";
 import { z } from "zod";
 import {
@@ -41,10 +42,15 @@ const form = ref({
   price: 0,
   type: "clothing",
   categoryId: 0,
-  image: null as File | null,
 });
+
+// Multiple images state
+const newImages = ref<File[]>([]);
+const newImagePreviews = ref<string[]>([]);
+const existingImages = ref<ItemImage[]>([]);
+const imagesToDelete = ref<number[]>([]);
+
 const selectedSizes = ref<string[]>([]);
-const imagePreview = ref<string | null>(null);
 const formErrors = ref<Record<string, string>>({});
 const formLoading = ref(false);
 
@@ -137,10 +143,12 @@ const openCreateModal = () => {
     price: 0,
     type: "clothing",
     categoryId: 0,
-    image: null,
   };
   selectedSizes.value = [];
-  imagePreview.value = null;
+  newImages.value = [];
+  newImagePreviews.value = [];
+  existingImages.value = [];
+  imagesToDelete.value = [];
   formErrors.value = {};
   isModalOpen.value = true;
 };
@@ -156,75 +164,107 @@ const openEditModal = (item: Item) => {
     price: item.price,
     type: item.type || "clothing",
     categoryId: item.categoryId,
-    image: null,
   };
   // Parse existing sizes
   selectedSizes.value = item.size
     ? item.size.split(",").map((s) => s.trim())
     : [];
-  imagePreview.value = item.imageUrl ? resolveImageUrl(item.imageUrl) : null;
+  // Load existing images
+  existingImages.value = item.images ? [...item.images] : [];
+  newImages.value = [];
+  newImagePreviews.value = [];
+  imagesToDelete.value = [];
   formErrors.value = {};
   isModalOpen.value = true;
 };
 
 const handleImageChange = (event: Event) => {
   const input = event.target as HTMLInputElement;
-  if (input.files && input.files[0]) {
-    const file = input.files[0];
-    if (file.size > 3 * 1024 * 1024) {
-      alert("Файл слишком большой (макс 3MB)");
-      return;
+  if (input.files && input.files.length > 0) {
+    for (const file of Array.from(input.files)) {
+      if (file.size > 3 * 1024 * 1024) {
+        alert(`Файл ${file.name} слишком большой (макс 3MB)`);
+        continue;
+      }
+      newImages.value.push(file);
+      newImagePreviews.value.push(URL.createObjectURL(file));
     }
-    form.value.image = file;
-    imagePreview.value = URL.createObjectURL(file);
+    // Reset input to allow selecting the same file again
+    input.value = "";
   }
 };
 
 const fileInput = ref<HTMLInputElement | null>(null);
 
 const handleDrop = (event: DragEvent) => {
-  const file = event.dataTransfer?.files[0];
-  if (file) {
-    if (file.size > 3 * 1024 * 1024) {
-      alert("Файл слишком большой (макс 3MB)");
-      return;
+  const files = event.dataTransfer?.files;
+  if (files && files.length > 0) {
+    for (const file of Array.from(files)) {
+      if (file.size > 3 * 1024 * 1024) {
+        alert(`Файл ${file.name} слишком большой (макс 3MB)`);
+        continue;
+      }
+      if (!file.type.startsWith("image/")) {
+        alert(`Файл ${file.name} не является изображением`);
+        continue;
+      }
+      newImages.value.push(file);
+      newImagePreviews.value.push(URL.createObjectURL(file));
     }
-    form.value.image = file;
-    imagePreview.value = URL.createObjectURL(file);
   }
 };
 
-const clearImageSelection = () => {
-  form.value.image = null;
-  if (editingItem.value && editingItem.value.imageUrl) {
-    imagePreview.value = resolveImageUrl(editingItem.value.imageUrl);
-  } else {
-    imagePreview.value = null;
-  }
-  if (fileInput.value) {
-    fileInput.value.value = "";
+const removeNewImage = (index: number) => {
+  URL.revokeObjectURL(newImagePreviews.value[index]);
+  newImages.value.splice(index, 1);
+  newImagePreviews.value.splice(index, 1);
+};
+
+const markExistingImageForDeletion = (imageId: number) => {
+  if (!imagesToDelete.value.includes(imageId)) {
+    imagesToDelete.value.push(imageId);
   }
 };
+
+const restoreExistingImage = (imageId: number) => {
+  const index = imagesToDelete.value.indexOf(imageId);
+  if (index > -1) {
+    imagesToDelete.value.splice(index, 1);
+  }
+};
+
+const isImageMarkedForDeletion = (imageId: number) => {
+  return imagesToDelete.value.includes(imageId);
+};
+
+// Total images count (existing not deleted + new)
+const totalImagesCount = computed(() => {
+  const existingCount = existingImages.value.filter(
+    (img) => !imagesToDelete.value.includes(img.id)
+  ).length;
+  return existingCount + newImages.value.length;
+});
 
 const handleNextStep = () => {
   formErrors.value = {};
-  try {
-    schema.parse(form.value);
+  const result = schema.safeParse(form.value);
+  if (result.success) {
     step.value = 2;
-  } catch (e: any) {
-    e.errors.forEach((err: any) => {
-      formErrors.value[err.path[0]] = err.message;
+  } else {
+    result.error.issues.forEach((err) => {
+      const field = err.path[0] as string;
+      formErrors.value[field] = err.message;
     });
   }
 };
 
 const handleSubmit = async () => {
   formErrors.value = {};
-  try {
-    schema.parse(form.value);
-  } catch (e: any) {
-    e.errors.forEach((err: any) => {
-      formErrors.value[err.path[0]] = err.message;
+  const result = schema.safeParse(form.value);
+  if (!result.success) {
+    result.error.issues.forEach((err) => {
+      const field = err.path[0] as string;
+      formErrors.value[field] = err.message;
     });
     return;
   }
@@ -247,13 +287,19 @@ const handleSubmit = async () => {
     if (editingItem.value) {
       await updateItem(editingItem.value.id, itemData);
       itemId = editingItem.value.id;
+
+      // Delete images marked for deletion
+      for (const imageId of imagesToDelete.value) {
+        await deleteItemImage(itemId, imageId);
+      }
     } else {
       const newItem = await createItem(itemData);
       itemId = newItem.id;
     }
 
-    if (form.value.image) {
-      await uploadItemImage(itemId, form.value.image);
+    // Upload new images
+    if (newImages.value.length > 0) {
+      await uploadItemImages(itemId, newImages.value);
     }
 
     await fetchData();
@@ -606,8 +652,74 @@ onMounted(fetchData);
 
         <div v-if="step === 2 || editingItem">
           <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Изображение</label
+            >Изображения ({{ totalImagesCount }}/10)</label
           >
+          
+          <!-- Existing images grid -->
+          <div v-if="existingImages.length > 0" class="mb-4">
+            <p class="text-xs text-gray-500 mb-2">Существующие изображения:</p>
+            <div class="grid grid-cols-4 gap-2">
+              <div
+                v-for="img in existingImages"
+                :key="img.id"
+                class="relative group"
+              >
+                <img
+                  :src="resolveImageUrl(img.url)"
+                  :alt="'Image ' + img.id"
+                  :class="[
+                    'w-full h-20 object-cover rounded-md border',
+                    isImageMarkedForDeletion(img.id)
+                      ? 'opacity-30 border-red-500'
+                      : 'border-gray-200',
+                  ]"
+                />
+                <button
+                  v-if="!isImageMarkedForDeletion(img.id)"
+                  type="button"
+                  @click="markExistingImageForDeletion(img.id)"
+                  class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                >
+                  ×
+                </button>
+                <button
+                  v-else
+                  type="button"
+                  @click="restoreExistingImage(img.id)"
+                  class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-md text-white text-xs"
+                >
+                  Восстановить
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- New images grid -->
+          <div v-if="newImagePreviews.length > 0" class="mb-4">
+            <p class="text-xs text-gray-500 mb-2">Новые изображения:</p>
+            <div class="grid grid-cols-4 gap-2">
+              <div
+                v-for="(preview, index) in newImagePreviews"
+                :key="'new-' + index"
+                class="relative group"
+              >
+                <img
+                  :src="preview"
+                  :alt="'New image ' + (index + 1)"
+                  class="w-full h-20 object-cover rounded-md border border-green-300"
+                />
+                <button
+                  type="button"
+                  @click="removeNewImage(index)"
+                  class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload area -->
           <div
             class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md relative hover:border-blue-400 transition-colors cursor-pointer"
             @click="fileInput?.click()"
@@ -615,19 +727,7 @@ onMounted(fetchData);
             @drop.prevent="handleDrop"
           >
             <div class="space-y-1 text-center">
-              <div v-if="imagePreview" class="relative inline-block">
-                <img
-                  :src="imagePreview"
-                  alt="Preview"
-                  class="mx-auto h-48 object-contain rounded-md bg-gray-50"
-                />
-                <div
-                  class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity rounded-md"
-                >
-                  <span class="text-white font-medium">Изменить</span>
-                </div>
-              </div>
-              <div v-else class="flex flex-col items-center py-4">
+              <div class="flex flex-col items-center py-4">
                 <svg
                   class="mx-auto h-12 w-12 text-gray-400"
                   stroke="currentColor"
@@ -646,11 +746,11 @@ onMounted(fetchData);
                   <span
                     class="relative bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
                   >
-                    Загрузить файл
+                    Добавить изображения
                   </span>
                   <p class="pl-1">или перетащите</p>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF до 3MB</p>
+                <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF до 3MB каждый (макс. 10 изображений)</p>
               </div>
             </div>
             <input
@@ -659,21 +759,9 @@ onMounted(fetchData);
               class="hidden"
               @change="handleImageChange"
               accept="image/*"
+              multiple
               @click.stop
             />
-          </div>
-          <div
-            v-if="form.image"
-            class="mt-2 flex items-center justify-between text-sm text-gray-500 bg-gray-50 p-2 rounded border border-gray-200"
-          >
-            <span class="truncate">{{ form.image.name }}</span>
-            <button
-              type="button"
-              @click.stop="clearImageSelection"
-              class="text-red-500 hover:text-red-700 ml-2"
-            >
-              Отменить выбор
-            </button>
           </div>
         </div>
 

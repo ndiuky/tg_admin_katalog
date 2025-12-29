@@ -120,6 +120,15 @@ const toggleSidebar = () => {
         </router-link>
 
         <router-link
+          to="/social"
+          class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          active-class="bg-gray-200 text-gray-900 font-medium"
+          @click="isSidebarOpen = false"
+        >
+          Социальные сети
+        </router-link>
+
+        <router-link
           to="/settings"
           class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           active-class="bg-gray-200 text-gray-900 font-medium"

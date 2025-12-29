@@ -17,6 +17,13 @@ export interface Category {
   items?: Item[];
 }
 
+export interface ItemImage {
+  id: number;
+  url: string;
+  order: number;
+  itemId: number;
+}
+
 export interface Item {
   id: number;
   title: string;
@@ -29,6 +36,7 @@ export interface Item {
   type: string;
   categoryId: number;
   category?: Category;
+  images?: ItemImage[];
 }
 
 export interface Lending {
@@ -36,4 +44,12 @@ export interface Lending {
   title: string;
   value: string;
   valueAz: string;
+}
+
+export interface SocialLink {
+  id: number;
+  platform: string;
+  url: string;
+  isActive: boolean;
+  order: number;
 }
