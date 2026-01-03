@@ -102,6 +102,15 @@ const toggleSidebar = () => {
         </router-link>
 
         <router-link
+          to="/styles"
+          class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+          active-class="bg-gray-200 text-gray-900 font-medium"
+          @click="isSidebarOpen = false"
+        >
+          Стили
+        </router-link>
+
+        <router-link
           to="/items"
           class="block px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           active-class="bg-gray-200 text-gray-900 font-medium"

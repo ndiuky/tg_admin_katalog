@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 import Login from "../pages/Login/Login.vue";
 import Categories from "../pages/Categories/Categories.vue";
+import Styles from "../pages/Styles/Styles.vue";
 import Items from "../pages/Items/Items.vue";
 import Lending from "../pages/Lending/Lending.vue";
 import Settings from "../pages/Settings/Settings.vue";
@@ -32,6 +33,11 @@ const router = createRouter({
           path: "categories",
           name: "Categories",
           component: Categories,
+        },
+        {
+          path: "styles",
+          name: "Styles",
+          component: Styles,
         },
         {
           path: "items",

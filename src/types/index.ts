@@ -35,6 +35,7 @@ export interface Item {
   size?: string;
   type: string;
   categoryId: number;
+  styleId?: number;
   category?: Category;
   images?: ItemImage[];
 }
@@ -52,4 +53,11 @@ export interface SocialLink {
   url: string;
   isActive: boolean;
   order: number;
+}
+
+export interface Style {
+  id: number;
+  title: string;
+  titleAz: string;
+  imageUrl?: string;
 }

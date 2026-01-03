@@ -9,6 +9,7 @@ import {
   deleteItemImage,
 } from "../../api/items";
 import { getCategories } from "../../api/categories";
+import { getStyles, type Style } from "../../api/styles";
 import type { Item, Category, ItemImage } from "../../types";
 import Modal from "../../components/Modal/Modal.vue";
 import { z } from "zod";
@@ -21,6 +22,7 @@ import {
 
 const items = ref<Item[]>([]);
 const categories = ref<Category[]>([]);
+const styles = ref<Style[]>([]);
 const loading = ref(false);
 const searchQuery = ref("");
 const filterCategory = ref<number | "all">("all");
@@ -42,6 +44,7 @@ const form = ref({
   price: 0,
   type: "clothing",
   categoryId: 0,
+  styleId: null as number | null,
 });
 
 // Multiple images state
@@ -96,12 +99,14 @@ const schema = z.object({
 const fetchData = async () => {
   loading.value = true;
   try {
-    const [itemsData, categoriesData] = await Promise.all([
+    const [itemsData, categoriesData, stylesData] = await Promise.all([
       getItems(),
       getCategories(),
+      getStyles(),
     ]);
     items.value = itemsData;
     categories.value = categoriesData;
+    styles.value = stylesData;
   } catch (e) {
     console.error(e);
   } finally {
@@ -143,6 +148,7 @@ const openCreateModal = () => {
     price: 0,
     type: "clothing",
     categoryId: 0,
+    styleId: null,
   };
   selectedSizes.value = [];
   newImages.value = [];
@@ -164,6 +170,7 @@ const openEditModal = (item: Item) => {
     price: item.price,
     type: item.type || "clothing",
     categoryId: item.categoryId,
+    styleId: item.styleId || null,
   };
   // Parse existing sizes
   selectedSizes.value = item.size
@@ -545,6 +552,23 @@ onMounted(fetchData);
 
             <div>
               <label class="block text-sm font-medium text-gray-700"
+                >Стиль (необязательно)</label
+              >
+              <select
+                v-model="form.styleId"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option :value="null">Без стиля</option>
+                <option v-for="style in styles" :key="style.id" :value="style.id">
+                  {{ style.title }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700"
                 >Цена</label
               >
               <input
@@ -558,27 +582,27 @@ onMounted(fetchData);
                 {{ formErrors.price }}
               </p>
             </div>
-          </div>
 
-          <div class="mt-4">
-            <label class="block text-sm font-medium text-gray-700"
-              >Тип товара</label
-            >
-            <select
-              v-model="form.type"
-              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option
-                v-for="productType in PRODUCT_TYPES"
-                :key="productType.id"
-                :value="productType.id"
+            <div>
+              <label class="block text-sm font-medium text-gray-700"
+                >Тип</label
               >
-                {{ productType.label }}
-              </option>
-            </select>
-            <p v-if="formErrors.type" class="text-red-500 text-xs mt-1">
-              {{ formErrors.type }}
-            </p>
+              <select
+                v-model="form.type"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option
+                  v-for="type in PRODUCT_TYPES"
+                  :key="type.value"
+                  :value="type.value"
+                >
+                  {{ type.label }}
+                </option>
+              </select>
+              <p v-if="formErrors.type" class="text-red-500 text-xs mt-1">
+                {{ formErrors.type }}
+              </p>
+            </div>
           </div>
 
           <div class="mt-4" v-if="availableSizes.length > 0">
