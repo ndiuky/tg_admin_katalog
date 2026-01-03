@@ -227,7 +227,8 @@ onMounted(fetchData);
       <p class="text-gray-500">Загрузка...</p>
     </div>
 
-    <div v-else class="bg-white rounded-lg shadow overflow-hidden">
+    <!-- Desktop Table View -->
+    <div v-else class="hidden md:block bg-white rounded-lg shadow overflow-hidden">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -314,6 +315,67 @@ onMounted(fetchData);
       </table>
     </div>
 
+    <!-- Mobile Cards View -->
+    <div v-if="!loading" class="md:hidden space-y-4">
+      <div
+        v-for="item in items"
+        :key="item.id"
+        class="bg-white rounded-lg shadow p-4"
+      >
+        <div class="mb-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span
+                class="w-5 h-5 text-gray-700"
+                v-html="getPlatformInfo(item.platform).icon"
+              ></span>
+              <span class="text-sm font-semibold text-gray-900">
+                {{ getPlatformInfo(item.platform).label }}
+              </span>
+            </div>
+            <button
+              @click="toggleActive(item)"
+              :class="[
+                'px-2 py-1 rounded-full text-xs font-medium transition-colors',
+                item.isActive
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-600',
+              ]"
+            >
+              {{ item.isActive ? "Активна" : "Скрыта" }}
+            </button>
+          </div>
+          <a
+            :href="item.url"
+            target="_blank"
+            class="text-xs text-blue-600 hover:underline break-all block"
+          >
+            {{ item.url }}
+          </a>
+        </div>
+        <div class="flex gap-2">
+          <button
+            @click="openEditModal(item)"
+            class="flex-1 bg-indigo-50 text-indigo-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
+          >
+            Редактировать
+          </button>
+          <button
+            @click="confirmDelete(item)"
+            class="flex-1 bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+          >
+            Удалить
+          </button>
+        </div>
+      </div>
+      <div
+        v-if="items.length === 0"
+        class="bg-white rounded-lg shadow p-8 text-center text-gray-500"
+      >
+        Социальные сети не добавлены
+      </div>
+    </div>
+
     <!-- Create/Edit Modal -->
     <Modal
       :isOpen="isModalOpen"
@@ -377,18 +439,18 @@ onMounted(fetchData);
           </label>
         </div>
 
-        <div class="flex justify-end space-x-3 mt-6">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-6">
           <button
             type="button"
             @click="isModalOpen = false"
-            class="px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            class="w-full sm:w-auto px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           >
             Отмена
           </button>
           <button
             type="submit"
             :disabled="formLoading"
-            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+            class="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           >
             {{ formLoading ? "Сохранение..." : "Сохранить" }}
           </button>
@@ -408,16 +470,16 @@ onMounted(fetchData);
           <b>{{ getPlatformInfo(itemToDelete?.platform || "").label }}</b
           >?
         </p>
-        <div class="flex justify-end space-x-3">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
           <button
             @click="isDeleteModalOpen = false"
-            class="px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            class="w-full sm:w-auto px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           >
             Отмена
           </button>
           <button
             @click="handleDelete"
-            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+            class="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
           >
             Удалить
           </button>
