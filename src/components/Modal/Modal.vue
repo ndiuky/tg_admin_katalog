@@ -12,14 +12,15 @@ defineEmits<{
 <template>
   <div
     v-if="isOpen"
-    class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/50 p-4 md:inset-0 h-modal md:h-full"
+    class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-2 sm:p-4"
+    @click.self="$emit('close')"
   >
-    <div class="relative w-full max-w-2xl h-full md:h-auto">
+    <div class="relative w-full max-w-2xl max-h-[90vh] flex flex-col">
       <!-- Modal content -->
-      <div class="relative bg-white rounded-lg shadow">
+      <div class="relative bg-white rounded-lg shadow flex flex-col max-h-[90vh]">
         <!-- Modal header -->
-        <div class="flex items-start justify-between p-4 rounded-t">
-          <h3 class="text-xl font-semibold text-gray-900">
+        <div class="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 rounded-t flex-shrink-0">
+          <h3 class="text-lg sm:text-xl font-semibold text-gray-900">
             {{ title }}
           </h3>
           <button
@@ -44,7 +45,7 @@ defineEmits<{
           </button>
         </div>
         <!-- Modal body -->
-        <div class="p-6 space-y-6">
+        <div class="p-4 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto">
           <slot></slot>
         </div>
       </div>

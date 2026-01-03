@@ -47,13 +47,13 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-      <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div class="max-w-md w-full bg-white rounded-lg shadow-md p-6 sm:p-8">
+      <h2 class="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-6 sm:mb-8">
         Вход в админ-панель
       </h2>
 
-      <form @submit.prevent="handleLogin" class="space-y-6">
+      <form @submit.prevent="handleLogin" class="space-y-4 sm:space-y-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1"
             >Имя пользователя</label
@@ -61,7 +61,7 @@ const handleLogin = async () => {
           <input
             v-model="username"
             type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Username"
           />
         </div>
@@ -73,7 +73,7 @@ const handleLogin = async () => {
           <input
             v-model="password"
             type="password"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Password"
           />
         </div>
@@ -85,7 +85,7 @@ const handleLogin = async () => {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+          class="w-full bg-blue-600 text-white py-2.5 sm:py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 text-base font-medium"
         >
           {{ loading ? "Вход..." : "Войти" }}
         </button>

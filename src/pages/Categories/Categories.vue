@@ -222,7 +222,8 @@ onMounted(fetchCategories);
       />
     </div>
 
-    <div class="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
+    <!-- Desktop Table View -->
+    <div class="hidden md:block bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -297,6 +298,52 @@ onMounted(fetchCategories);
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile Cards View -->
+    <div class="md:hidden space-y-4">
+      <div
+        v-for="category in filteredCategories"
+        :key="category.id"
+        class="bg-white rounded-lg shadow p-4"
+      >
+        <div class="flex items-start gap-4">
+          <img
+            :src="resolveImageUrl(category.imageUrl)"
+            alt="Category"
+            class="h-16 w-16 rounded-lg object-cover flex-shrink-0"
+          />
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1">
+              <p class="text-xs text-gray-500">ID: {{ category.id }}</p>
+            </div>
+            <h3 class="text-sm font-semibold text-gray-900 mb-1">
+              {{ category.title }}
+            </h3>
+            <p class="text-sm text-gray-600">{{ category.titleAz }}</p>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <button
+            @click="openEditModal(category)"
+            class="flex-1 bg-indigo-50 text-indigo-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
+          >
+            Редактировать
+          </button>
+          <button
+            @click="confirmDelete(category)"
+            class="flex-1 bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+          >
+            Удалить
+          </button>
+        </div>
+      </div>
+      <div
+        v-if="filteredCategories.length === 0"
+        class="bg-white rounded-lg shadow p-8 text-center text-gray-500"
+      >
+        Категории не найдены
+      </div>
     </div>
 
     <!-- Create/Edit Modal -->
@@ -409,19 +456,19 @@ onMounted(fetchCategories);
           </div>
         </div>
 
-        <div class="flex justify-end space-x-3 mt-6">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-6">
           <button
             v-if="step === 2 && !editingCategory"
             type="button"
             @click="step = 1"
-            class="px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            class="w-full sm:w-auto px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           >
             Назад
           </button>
           <button
             type="button"
             @click="isModalOpen = false"
-            class="px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            class="w-full sm:w-auto px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           >
             Отмена
           </button>
@@ -429,7 +476,7 @@ onMounted(fetchCategories);
             v-if="step === 1 && !editingCategory"
             type="button"
             @click="handleNextStep"
-            class="px-4 py-2 border border-blue-600 rounded-md text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+            class="w-full sm:w-auto px-4 py-2 border border-blue-600 rounded-md text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
           >
             Добавить фото
           </button>
@@ -462,16 +509,16 @@ onMounted(fetchCategories);
         >
           Внимание: У этой категории есть связанные товары!
         </p>
-        <div class="flex justify-end space-x-3">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
           <button
             @click="isDeleteModalOpen = false"
-            class="px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            class="w-full sm:w-auto px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           >
             Отмена
           </button>
           <button
             @click="handleDelete"
-            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+            class="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
           >
             Удалить
           </button>
