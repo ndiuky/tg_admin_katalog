@@ -593,8 +593,8 @@ onMounted(fetchData);
               >
                 <option
                   v-for="type in PRODUCT_TYPES"
-                  :key="type.value"
-                  :value="type.value"
+                  :key="type.id"
+                  :value="type.id"
                 >
                   {{ type.label }}
                 </option>
