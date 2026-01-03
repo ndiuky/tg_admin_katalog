@@ -147,7 +147,8 @@ onMounted(fetchData);
       />
     </div>
 
-    <div class="bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
+    <!-- Desktop Table View -->
+    <div class="hidden md:block bg-white rounded-lg shadow overflow-hidden overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
@@ -212,6 +213,47 @@ onMounted(fetchData);
       </table>
     </div>
 
+    <!-- Mobile Cards View -->
+    <div class="md:hidden space-y-4">
+      <div
+        v-for="item in filteredItems"
+        :key="item.id"
+        class="bg-white rounded-lg shadow p-4"
+      >
+        <div class="mb-3">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs text-gray-500">ID: {{ item.id }}</p>
+          </div>
+          <h3 class="text-sm font-semibold text-gray-900 mb-2">
+            {{ item.title }}
+          </h3>
+          <p class="text-xs text-gray-600 line-clamp-2">
+            {{ item.value }}
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <button
+            @click="openEditModal(item)"
+            class="flex-1 bg-indigo-50 text-indigo-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
+          >
+            Редактировать
+          </button>
+          <button
+            @click="confirmDelete(item)"
+            class="flex-1 bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors"
+          >
+            Удалить
+          </button>
+        </div>
+      </div>
+      <div
+        v-if="filteredItems.length === 0"
+        class="bg-white rounded-lg shadow p-8 text-center text-gray-500"
+      >
+        Элементы не найдены
+      </div>
+    </div>
+
     <!-- Create/Edit Modal -->
     <Modal
       :isOpen="isModalOpen"
@@ -261,18 +303,18 @@ onMounted(fetchData);
           </p>
         </div>
 
-        <div class="flex justify-end space-x-3 mt-6">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-6">
           <button
             type="button"
             @click="isModalOpen = false"
-            class="px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            class="w-full sm:w-auto px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           >
             Отмена
           </button>
           <button
             type="submit"
             :disabled="formLoading"
-            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+            class="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           >
             {{ formLoading ? "Сохранение..." : "Сохранить" }}
           </button>
@@ -291,16 +333,16 @@ onMounted(fetchData);
           Вы уверены, что хотите удалить элемент <b>{{ itemToDelete?.title }}</b
           >?
         </p>
-        <div class="flex justify-end space-x-3">
+        <div class="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
           <button
             @click="isDeleteModalOpen = false"
-            class="px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            class="w-full sm:w-auto px-4 py-2 border border-gray-400 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
           >
             Отмена
           </button>
           <button
             @click="handleDelete"
-            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+            class="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700"
           >
             Удалить
           </button>
