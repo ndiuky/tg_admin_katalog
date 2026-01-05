@@ -287,6 +287,7 @@ const handleSubmit = async () => {
       type: form.value.type,
       size: selectedSizes.value.join(","),
       categoryId: form.value.categoryId,
+      styleId: form.value.styleId,
     };
 
     let itemId: number;
